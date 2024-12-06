@@ -1,0 +1,33 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: aigentx
+    network: base-sepolia
+    source:
+      address: "0x25997bE7f88837d4aa996Eb3027b5F574449B9E2"
+      abi: aigentx
+      startBlock: 6902694
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - NFT
+        - User
+        - TokenMetadata
+        - Transaction
+      abis:
+        - name: aigentx
+          file: ./abis/aigentx.json
+      eventHandlers:
+        - event: TokenMinted(indexed address,indexed uint256,string,bool)
+          handler: handleTokenMinted
+        - event: TokenPriceSet(indexed uint256,uint256)
+          handler: handleTokenPriceSet
+        - event: TokenSold(indexed address,indexed address,indexed uint256,uint256)
+          handler: handleTokenSold
+      file: ./src/aigentx.ts
