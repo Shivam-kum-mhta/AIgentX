@@ -9,10 +9,10 @@ from phi.tools.wikipedia import WikipediaTools
 from phi.tools.sleep import Sleep
 from dotenv import load_dotenv
 from cdp import *
+from phi.model.openai.like import OpenAILike
 import os
 import json
 from phi.agent import Agent, RunResponse
-from phi.model.ollama import Ollama
 from cdp.errors import UnsupportedAssetError
 from Creator import ChatbotAnalyzer
 from schemas import *
@@ -213,21 +213,21 @@ def load_agent(NFT_id,prompt):
         balance = agent.wallet.balance(asset_id)
         return f"Current balance of {asset_id}: {balance}"
 
-    def create_token(name, symbol, initial_supply):
-        """
-        Create a new ERC-20 token.
+    # def create_token(name, symbol, initial_supply):
+    #     """
+    #     Create a new ERC-20 token.
         
-        Parameters:
-        name (str): The name of the token.
-        symbol (str): The symbol of the token.
-        initial_supply (int): The initial supply of tokens.
+    #     Parameters:
+    #     name (str): The name of the token.
+    #     symbol (str): The symbol of the token.
+    #     initial_supply (int): The initial supply of tokens.
         
-        Returns:
-        str: A message confirming the token creation with details.
-        """
-        deployed_contract = agent.wallet.deploy_token(name, symbol, initial_supply)
-        deployed_contract.wait()
-        return f"Token {name} ({symbol}) created with initial supply of {initial_supply} and contract address {deployed_contract.contract_address}"
+    #     Returns:
+    #     str: A message confirming the token creation with details.
+    #     """
+    #     deployed_contract = agent.wallet.deploy_token(name, symbol, initial_supply)
+    #     deployed_contract.wait()
+    #     return f"Token {name} ({symbol}) created with initial supply of {initial_supply} and contract address {deployed_contract.contract_address}"
 
     def transfer_asset(amount, asset_id, destination_address):
         """
@@ -269,25 +269,25 @@ def load_agent(NFT_id,prompt):
         except Exception as e:
             return f"Error transferring asset: {str(e)}. If this is a custom token, it may have been recently deployed. Please try again in about 30 minutes, as it needs to be indexed by CDP first."
 
-    def mint_nft(contract_address, mint_to):
-        """
-        Mint an NFT to a specified address.
+    # def mint_nft(contract_address, mint_to):
+    #     """
+    #     Mint an NFT to a specified address.
             
-        Parameters:
-        contract_address (str): Address of the NFT contract.
-        mint_to (str): Address to mint NFT to.
+    #     Parameters:
+    #     contract_address (str): Address of the NFT contract.
+    #     mint_to (str): Address to mint NFT to.
             
-        Returns:
-        str: Status message about the NFT minting.
-        """
-        try:
-            mint_args = {"to": mint_to, "quantity": "1"}
+    #     Returns:
+    #     str: Status message about the NFT minting.
+    #     """
+    #     try:
+    #         mint_args = {"to": mint_to, "quantity": "1"}
 
-            mint_invocation = agent.wallet.invoke_contract(
-                contract_address=contract_address, method="mint", args=mint_args)
-            mint_invocation.wait()
+    #         mint_invocation = agent.wallet.invoke_contract(
+    #             contract_address=contract_address, method="mint", args=mint_args)
+    #         mint_invocation.wait()
 
-            return f"Successfully minted NFT to {mint_to}"
+    #         return f"Successfully minted NFT to {mint_to}"
 
         except Exception as e:
             return f"Error minting NFT: {str(e)}"
@@ -297,14 +297,16 @@ def load_agent(NFT_id,prompt):
             if key in Tools.keys():
                 ToolKit.append(Tools[key])
     based_agent = Agent(
-        model=Ollama(id="llama3.2"),
-        tools=[get_balance, create_token, transfer_asset, mint_nft,ExaTools(api_key=os.getenv("EXA_API_KEY"))]+ToolKit,
-        description=data["Personality"],
+        model=OpenAILike(id="llama3.1:70b",api_key=os.getenv("GALADRIAL_API_KEY"),base_url="https://api.galadriel.com/v1"),
+        tools=[get_balance, transfer_asset, ExaTools(api_key=os.getenv("EXA_API_KEY"))]+ToolKit,
+        description=data["Personality"]+f"You have very in depth knowledge in the fields of {data["Concepts"]}",
         instructions=[
             "Always display the balance when asked.",
-            "Everything you do is not a simulation but instead real-life actions."
-        ] + [data["Instructions"]],
-        Debug_mode=True
+            "As long as the prompt is not about transactions or balance, the answer should be long, thorough and based on the personality.",
+            "Make sure that when you speak you are speaking according to your personality and as if you are in the middle of a conversation with the other person. Make sure there is a flow."
+            "Make the conversation as interactive and socaial as possible."
+            "Always search for real time data on the question asked and then answer."
+        ]
     )
     run: RunResponse = based_agent.run(prompt)
     return agentInteractResponse(response=run.content,isMetaMask=False,walletAddress=agent.wallet.default_address.address_id,value=None,Responses=0)
