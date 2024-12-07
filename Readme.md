@@ -1,7 +1,8 @@
 # AIgentX
 
-
-![AIgentX Banner](logo.png)
+<div align="center">
+  <img src="logo.png" alt="AIgentX Logo" width="80" height="80" style="border-radius: 50%; border: 2px solid #6747ED; padding: 2px; background: white; box-shadow: 0 0 10px rgba(103, 71, 237, 0.3);">
+</div>
 
 ![AIgentX Demo](image.png)
 
@@ -65,6 +66,7 @@ Here's how we have used various technologies to make this project a reality:
 ![Base](https://img.shields.io/badge/Powered%20by-Base-0052FF?style=for-the-badge&logo=coinbase)
 ![The Graph](https://img.shields.io/badge/Query%20with-The%20Graph-6747ED?style=for-the-badge&logo=thegraph)
 ![Walrus](https://img.shields.io/badge/Store%20with-Walrus-2E3440?style=for-the-badge)
+![AI](https://img.shields.io/badge/Think%20with-AI-FF4B4B?style=for-the-badge&logo=openai)
 
 ### FastAPI Backend
 Our high-performance backend handles agent creation and management, powered by FastAPI for lightning-fast response times and efficient processing of natural language inputs.
@@ -214,4 +216,3 @@ Available Public Publishers (Testnet):
 [Shivam Kumar A](https://github.com/Shivam-kum-mhta)
 
 [Kush Anchaliya](https://devfolio.co/@marcdhi)
-``````</rewritten_file>
