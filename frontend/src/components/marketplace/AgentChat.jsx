@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useWeb3 } from '../../context/Web3Context'
 import { Button } from '../shared/Button'
 import { ArrowLeft } from 'lucide-react'
+import { VoiceInput } from '../shared/VoiceInput'
 
 export function AgentChat() {
   const { tokenURI } = useParams()
@@ -48,15 +49,15 @@ export function AgentChat() {
       addMessage('Agent', response.response || JSON.stringify(response))
     }
 
-    wsRef.current.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason)
+    wsRef.current.onclose = () => {
+      console.log('Disconnected from WebSocket')
       setConnected(false)
-      addMessage('System', `Disconnected from agent: ${event.reason || 'Connection closed'}`)
+      addMessage('System', 'Disconnected from agent')
     }
 
     wsRef.current.onerror = (error) => {
       console.error('WebSocket error:', error)
-      addMessage('System', 'Connection error occurred')
+      addMessage('System', 'Error: ' + error.message)
     }
   }
 
@@ -135,16 +136,22 @@ export function AgentChat() {
           </div>
 
           <form onSubmit={sendMessage} className="flex space-x-2">
-            <input
-              type="text"
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <Button type="submit" disabled={!connected}>
-              Send
-            </Button>
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 bg-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+              />
+              <VoiceInput
+                onTranscript={(transcript) => setCurrentMessage(transcript)}
+                className="absolute right-2"
+              />
+              <Button type="submit" disabled={!connected}>
+                Send
+              </Button>
+            </div>
           </form>
 
           <Button

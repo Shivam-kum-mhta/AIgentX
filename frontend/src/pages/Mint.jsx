@@ -4,6 +4,7 @@ import { MintForm } from '../components/mint/MintForm'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Sparkles } from 'lucide-react'
+import { VoiceInput } from '../components/shared/VoiceInput'
 
 export function Mint() {
   const [loading, setLoading] = useState(false)

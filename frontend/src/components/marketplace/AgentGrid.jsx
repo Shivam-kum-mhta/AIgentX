@@ -4,6 +4,7 @@ import { Search, Filter } from 'lucide-react'
 import { Input } from '../shared/Input'
 import { Button } from '../shared/Button'
 import { motion } from 'framer-motion'
+import { VoiceInput } from '../shared/VoiceInput'
 
 export function AgentGrid({ agents, onBuy, onRent }) {
   const [search, setSearch] = useState('')
@@ -21,13 +22,17 @@ export function AgentGrid({ agents, onBuy, onRent }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <Input
             placeholder="Search agents..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full"
+            className="w-full pr-12"
             icon={<Search className="w-4 h-4 text-gray-400" />}
+          />
+          <VoiceInput
+            onTranscript={(transcript) => setSearch(transcript)}
+            className="absolute right-2 top-1/2 -translate-y-1/2"
           />
         </div>
         <div className="flex gap-2">

@@ -6,17 +6,31 @@ import { useStability } from '../../services/stability'
 import { Button } from '../shared/Button'
 import { Input } from '../shared/Input'
 import { ImageGenerator } from './ImageGenerator'
+import { VoiceInput } from '../shared/VoiceInput'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
 import { useWeb3 } from '../../context/Web3Context'
 
+// Add supported languages
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'hi', name: 'Hindi' }
+]
 
 export function MintForm({ onSuccess }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [image, setImage] = useState(null)
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [translatedDescription, setTranslatedDescription] = useState('')
   
   const { mintAgent} = useContract()
   const { uploadToWalrus } = useWalrus()
@@ -122,6 +136,47 @@ export function MintForm({ onSuccess }) {
     }
   }
 
+  const translateText = async (text, targetLang) => {
+    try {
+      const langCode = targetLang.split('-')[0]
+      const sourceLang = 'en'
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${langCode}&key=3b4ad687568b5bb8a34e`
+      )
+      const data = await response.json()
+      
+      if (data.responseStatus === 200) {
+        return data.responseData.translatedText
+      } else {
+        throw new Error(data.responseMessage || 'Translation failed')
+      }
+    } catch (error) {
+      console.error('Translation error:', error)
+      toast.error('Failed to translate text')
+      return text // Return original text if translation fails
+    }
+  }
+
+  const handleLanguageChange = async (e) => {
+    const newLang = e.target.value
+    setSelectedLanguage(newLang)
+    
+    if (description && newLang !== 'en') {
+      const translated = await translateText(description, newLang)
+      setTranslatedDescription(translated)
+    } else {
+      setTranslatedDescription('')
+    }
+  }
+
+  const handleVoiceInput = async (transcript) => {
+    setDescription(transcript)
+    if (selectedLanguage !== 'en') {
+      const translated = await translateText(transcript, selectedLanguage)
+      setTranslatedDescription(translated)
+    }
+  }
+
   return (
     <form onSubmit={handleMint} className="space-y-6">
       <Input
@@ -131,18 +186,41 @@ export function MintForm({ onSuccess }) {
         required
       />
       
-      <Input
-        label="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        multiline
-        required
-      />
+      <div className="space-y-2">
+        <select
+          value={selectedLanguage}
+          onChange={handleLanguageChange}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        >
+          {LANGUAGES.map(lang => (
+            <option key={lang.code} value={lang.code}>
+              {lang.name}
+            </option>
+          ))}
+        </select>
 
-      {/* <ImageGenerator
-        description={description}
-        onGenerate={setImage}
-      /> */}
+        <Input
+          label="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          multiline
+          required
+        />
+        
+        {translatedDescription && (
+          <Input
+            label="Translated Description"
+            value={translatedDescription}
+            readOnly
+            multiline
+          />
+        )}
+
+        <VoiceInput 
+          onTranscript={handleVoiceInput}
+          className="ml-2" 
+        />
+      </div>
 
       <Button
         type="submit"
