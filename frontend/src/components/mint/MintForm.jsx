@@ -8,6 +8,7 @@ import { Input } from '../shared/Input'
 import { ImageGenerator } from './ImageGenerator'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
+import { useWeb3 } from '../../context/Web3Context'
 
 
 export function MintForm({ onSuccess }) {
@@ -17,10 +18,12 @@ export function MintForm({ onSuccess }) {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   
-  const { mintAgent } = useContract()
+  const { mintAgent} = useContract()
   const { uploadToWalrus } = useWalrus()
   const { generateImage } = useStability()
+  const { account } = useWeb3()
 
+  console.log('account from the backend is here', account)
   const optimizeImage = async (imageData) => {
     return new Promise((resolve) => {
       const img = new Image()
@@ -66,7 +69,29 @@ export function MintForm({ onSuccess }) {
 
       const blobId = await uploadToWalrus(metadata)
       console.log('the blob id after uploading to walrus', blobId)
-      // Generate UUID before minting for later use
+      
+      // Create agent on backend before minting
+      const agentResponse = await fetch(`http://localhost:8000/create-agent/${account}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'http://localhost:3001' // this is the frontend port number properly
+        },
+        body: JSON.stringify({
+          prompt: description,
+          nftHash: blobId
+        })
+      })
+
+      if (!agentResponse.ok) {
+        const errorData = await agentResponse.json()
+        throw new Error(errorData.detail || 'Failed to create agent')
+      }
+
+      const agentData = await agentResponse.json()
+      console.log('Agent created with wallet:', agentData.walletAddress)
+
+      // Generate UUID and mint NFT
       const agentUUID = uuidv4()
       console.log('Generated UUID:', agentUUID)
       
@@ -78,7 +103,6 @@ export function MintForm({ onSuccess }) {
       })
       console.log('the token id after minting', tokenId)
       console.log('the tx', tx)
-
 
       toast.success('Agent minted successfully!')
       onSuccess?.(tx)
@@ -115,10 +139,10 @@ export function MintForm({ onSuccess }) {
         required
       />
 
-      <ImageGenerator
+      {/* <ImageGenerator
         description={description}
         onGenerate={setImage}
-      />
+      /> */}
 
       <Button
         type="submit"

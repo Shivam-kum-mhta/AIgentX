@@ -1,11 +1,17 @@
 import { motion } from 'framer-motion'
 import { ethers } from 'ethers'
 import { Button } from '../shared/Button'
-import { Star, Clock } from 'lucide-react'
+import { Star, Clock, MessageCircle } from 'lucide-react'
+import { useWeb3 } from '../../context/Web3Context'
+import { useNavigate } from 'react-router-dom'
+
+
 
 export function AgentCard({ agent, onBuy, onRent }) {
+  const navigate = useNavigate()
   const {
     tokenId,
+    tokenURI,
     name,
     description,
     image,
@@ -14,8 +20,17 @@ export function AgentCard({ agent, onBuy, onRent }) {
     rating,
     ratingCount,
     isForSale,
-    isForRent
+    isForRent,
   } = agent
+  const { account } = useWeb3()
+  const betterDescription = 'Prompt: ' + description
+  console.log('account from the agent card is here', account)
+  console.log('tokenURI from the agent card is here', tokenURI)
+  console.log('tokenId from the agent card is here', tokenId)
+
+  const handleChatClick = () => {
+    navigate(`/chat/${tokenURI}`)
+  }
 
   return (
     <motion.div
@@ -48,7 +63,7 @@ export function AgentCard({ agent, onBuy, onRent }) {
       <div className="p-4">
         <h3 className="text-lg font-medium mb-2">{name}</h3>
         <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-          {description}
+          {betterDescription}
         </p>
 
         <div className="flex items-center justify-between mb-4">
@@ -84,6 +99,13 @@ export function AgentCard({ agent, onBuy, onRent }) {
               Rent
             </Button>
           )}
+          <Button
+            onClick={handleChatClick}
+            variant="secondary"
+            className="flex items-center justify-center px-4"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </motion.div>

@@ -8,6 +8,7 @@ import { Mint } from './pages/Mint'
 import { Marketplace } from './pages/Marketplace'
 import { AgentDetails } from './components/marketplace/AgentDetails'
 import { MyAgents } from './pages/MyAgents'
+import { AgentChat } from './components/marketplace/AgentChat'
 import './styles/index.css'
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/agent/:tokenId" element={<AgentDetails />} />
               <Route path="/my-agents" element={<MyAgents />} />
+              <Route path="/chat/:tokenURI" element={<AgentChat />} />
             </Routes>
           </Layout>
         </Router>
