@@ -180,6 +180,24 @@ def store_mapping(nft_id, wallet_id):
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4)
 
+def store_response(wallet_id,prompt,response):
+    """Store or update the response for a specific wallet ID in a JSON file."""
+    file_path = 'conversations.json'
+    
+    # Load existing data if the file exists
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+    else:
+        data = {}
+
+    # Update the response for the specified wallet ID
+    data[wallet_id] = f"Question:{prompt},answer: "+response
+    
+    # Write the updated data back to the JSON file
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
 def get_wallet_id(nft_id):
     filename = 'map.json'
     try:
@@ -193,10 +211,23 @@ def get_wallet_id(nft_id):
         return data[nft_id]
     else:
         return "NFT ID not found."
-
+    
+def get_last_conversation(wallet_id):
+    """Retrieve the last conversation for a specific wallet ID from conversations.json."""
+    file_path = 'conversations.json'
+    
+    # Attempt to read the JSON data from the file
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        # Check if the wallet ID exists in the data
+        if wallet_id in data:
+            return data[wallet_id]
+        else:
+            return "not there. This is your first conversation."
 
 def load_agent(NFT_id,prompt):
     wallet_id = get_wallet_id(NFT_id)
+    convo = get_last_conversation(wallet_id)
     agent = OnChainAgents(Wallet_Id=wallet_id)
     file_path = f"DB/{agent.wallet.default_address.address_id}.json"
     data = read_json_data(file_path)
@@ -306,9 +337,12 @@ def load_agent(NFT_id,prompt):
             "Make sure that when you speak you are speaking according to your personality and as if you are in the middle of a conversation with the other person. Make sure there is a flow."
             "Make the conversation as interactive and socaial as possible."
             "Always search for real time data on the question asked and then answer."
+            f"Your last conversation was {convo}."
+            "Make sure you dont break the flow."
         ]
     )
     run: RunResponse = based_agent.run(prompt)
+    store_response(wallet_id,prompt,run.content)
     return agentInteractResponse(response=run.content,isMetaMask=False,walletAddress=agent.wallet.default_address.address_id,value=None,Responses=0)
 
 def CreateAgent(prompt,NFT_id):
@@ -322,3 +356,5 @@ def CreateAgent(prompt,NFT_id):
     store_mapping(NFT_id,data.wallet_id)
     agent.save_wallet(data)
     return walletAddress(walletAddress=agent.wallet.default_address.address_id)
+
+load_agent("123","What did I ask you in the previous conversation.")
