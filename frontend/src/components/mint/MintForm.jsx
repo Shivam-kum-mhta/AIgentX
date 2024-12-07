@@ -24,13 +24,66 @@ const LANGUAGES = [
   { code: 'hi', name: 'Hindi' }
 ]
 
+const transliterate = async (text, language) => {
+  try {
+    const response = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=${language}-t-i0-und&num=1`)
+    const data = await response.json()
+    
+    if (data[0] === 'SUCCESS') {
+      return data[1][0][1][0] // Get the first suggestion
+    }
+    return text
+  } catch (error) {
+    console.error('Transliteration error:', error)
+    return text
+  }
+}
+
+const translateText = async (text, fromLang, toLang = 'en') => {
+  try {
+    // First try to transliterate if needed
+    let nativeText = text
+    if (fromLang === 'hi') {
+      nativeText = await transliterate(text, 'hi')
+    }
+
+    // Then translate to English
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(nativeText)}&langpair=${fromLang}|${toLang}&key=3b4ad687568b5bb8a34e`
+    )
+    const data = await response.json()
+    
+    if (data.responseStatus === 200) {
+      return {
+        english: data.responseData.translatedText,
+        native: nativeText // Use the transliterated text
+      }
+    } else {
+      throw new Error(data.responseMessage || 'Translation failed')
+    }
+  } catch (error) {
+    console.error('Translation error:', error)
+    toast.error('Failed to translate text')
+    return {
+      english: text,
+      native: text
+    }
+  }
+}
+
+// Language codes for transliteration
+const TRANSLITERATION_CODES = {
+  hi: 'hi-t-i0-und',
+  // Add more languages that support transliteration
+}
+
 export function MintForm({ onSuccess }) {
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [description, setDescription] = useState('') // This will store English translation
+  const [nativeInput, setNativeInput] = useState('') // This will store native language input
   const [image, setImage] = useState(null)
   const [loading, setLoading] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
-  const [translatedDescription, setTranslatedDescription] = useState('')
   
   const { mintAgent} = useContract()
   const { uploadToWalrus } = useWalrus()
@@ -136,44 +189,36 @@ export function MintForm({ onSuccess }) {
     }
   }
 
-  const translateText = async (text, targetLang) => {
-    try {
-      const langCode = targetLang.split('-')[0]
-      const sourceLang = 'en'
-      const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${langCode}&key=3b4ad687568b5bb8a34e`
-      )
-      const data = await response.json()
-      
-      if (data.responseStatus === 200) {
-        return data.responseData.translatedText
-      } else {
-        throw new Error(data.responseMessage || 'Translation failed')
-      }
-    } catch (error) {
-      console.error('Translation error:', error)
-      toast.error('Failed to translate text')
-      return text // Return original text if translation fails
-    }
-  }
-
   const handleLanguageChange = async (e) => {
     const newLang = e.target.value
     setSelectedLanguage(newLang)
     
     if (description && newLang !== 'en') {
-      const translated = await translateText(description, newLang)
-      setTranslatedDescription(translated)
+      setNativeInput('') // Clear native input when switching languages
+    }
+  }
+
+  const handleNativeInputChange = async (e) => {
+    const newText = e.target.value
+    setNativeInput(newText)
+    
+    if (selectedLanguage !== 'en' && newText) {
+      const { english, native } = await translateText(newText, selectedLanguage)
+      setNativeInput(native) // This will now be in native script
+      setDescription(english) // This will be in English
     } else {
-      setTranslatedDescription('')
+      setDescription(newText)
     }
   }
 
   const handleVoiceInput = async (transcript) => {
-    setDescription(transcript)
     if (selectedLanguage !== 'en') {
-      const translated = await translateText(transcript, selectedLanguage)
-      setTranslatedDescription(translated)
+      const { english, native } = await translateText(transcript, selectedLanguage)
+      setNativeInput(native) // This will now be in native script
+      setDescription(english) // This will be in English
+    } else {
+      setNativeInput('')
+      setDescription(transcript)
     }
   }
 
@@ -199,20 +244,29 @@ export function MintForm({ onSuccess }) {
           ))}
         </select>
 
-        <Input
-          label="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          multiline
-          required
-        />
-        
-        {translatedDescription && (
+        {selectedLanguage !== 'en' ? (
+          <>
+            <Input
+              label={`Description (${LANGUAGES.find(l => l.code === selectedLanguage)?.name})`}
+              value={nativeInput}
+              onChange={handleNativeInputChange}
+              multiline
+              required
+            />
+            <Input
+              label="English Translation"
+              value={description}
+              readOnly
+              multiline
+            />
+          </>
+        ) : (
           <Input
-            label="Translated Description"
-            value={translatedDescription}
-            readOnly
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             multiline
+            required
           />
         )}
 
