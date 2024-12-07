@@ -1,8 +1,7 @@
 # AIgentX
 
-<div align="center">
-  <img src="logo.png" alt="AIgentX Logo" width="80" height="80" style="border-radius: 50%; border: 2px solid #6747ED; padding: 2px; background: white;">
-</div>
+
+![AIgentX Banner](logo.png)
 
 ![AIgentX Demo](image.png)
 
@@ -120,9 +119,7 @@ Base blockchain provides the foundation for our smart contracts, enabling secure
 
 2. **Blockchain Integration**: Successfully implemented secure wallet management and transaction handling for autonomous agents.
 
-3. **Data Privacy**: Created robust encryption mechanisms to protect user data and agent configurations.
 
-4. **Scalability**: Optimized the platform to handle multiple concurrent agent creations and transactions.
 
 ## Installation and Setup Guide
 
@@ -167,34 +164,45 @@ python main.py
 # Install Graph CLI
 npm install -g @graphprotocol/graph-cli
 
-# Initialize subgraph
-graph init
+# Initialize and create a new subgraph
+graph init --studio aigentx
 
-# Deploy subgraph
-graph deploy --product hosted-service your-username/aigentx
+# Generate code and build
+graph codegen && graph build
+
+# Deploy to The Graph Studio
+graph deploy --studio aigentx
 ```
 
 ### Walrus Configuration
 ```bash
-# Set up Walrus credentials
-export WALRUS_API_KEY=your_api_key
-export WALRUS_SECRET=your_secret
+# Choose a public aggregator from the list below
+export WALRUS_AGGREGATOR_URL="https://aggregator.walrus-testnet.walrus.space"
 
-# Initialize storage
-walrus init
+# Choose a public publisher from the list below
+export WALRUS_PUBLISHER_URL="https://publisher.walrus-testnet.walrus.space"
+
+# For testing purposes (up to 10 MiB files)
+# No authentication required for public endpoints
 ```
 
-Required environment variables:
-```env
-# Frontend
-REACT_APP_GRAPH_URL=your_subgraph_url
-REACT_APP_WALRUS_KEY=your_walrus_key
+Available Public Aggregators (Testnet):
+- https://aggregator.walrus-testnet.walrus.space
+- https://wal-aggregator-testnet.staketab.org
+- https://walrus-testnet-aggregator.bartestnet.com
+- https://walrus-testnet.blockscope.net
+- [View full list](https://docs.walrus.space/public-endpoints)
 
-# Backend
-WALRUS_API_KEY=your_walrus_api_key
-GRAPH_API_KEY=your_graph_api_key
-```
+Available Public Publishers (Testnet):
+- https://publisher.walrus-testnet.walrus.space
+- https://wal-publisher-testnet.staketab.org
+- https://walrus-testnet-publisher.bartestnet.com
+- [View full list](https://docs.walrus.space/public-endpoints)
 
+> **Note**: Public publishers have a 10 MiB file size limit. For larger files, consider running your own publisher or using the CLI. Mainnet deployment would require authentication and compensation for SUI and WAL tokens used.
+
+
+### Now Setup your .env accordingly
 ## Team Members
 
 [Suyash Nahar](https://github.com/suyash101101)
@@ -206,5 +214,4 @@ GRAPH_API_KEY=your_graph_api_key
 [Shivam Kumar A](https://github.com/Shivam-kum-mhta)
 
 [Kush Anchaliya](https://devfolio.co/@marcdhi)
-
-```
+``````</rewritten_file>
