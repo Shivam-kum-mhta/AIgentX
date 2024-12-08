@@ -11,6 +11,9 @@ router = APIRouter()
 # Store chat authorizations in memory
 chat_authorizations: Dict[str, ChatAuthorization] = {}
 
+# File path for authorizations
+AUTHORIZATIONS_FILE = 'authorisations.json'
+
 # Initialize WebSocket handler
 chat_websocket = ChatWebSocket(chat_authorizations)
 
@@ -57,12 +60,7 @@ async def interact_with_agent(
     
     try:
         response = load_agent(NFT_id=nft_hash, prompt=request.prompt)
-        
-        return agentInteractResponse(
-            response=response,
-            isMetaMask=False,
-            Responses=1
-        )
+        return response
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
