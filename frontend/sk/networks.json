@@ -1,0 +1,8 @@
+{
+  "base-sepolia": {
+    "AIgentX": {
+      "address": "0xC13ce8B54E9E7fD55e98cD10e8e4A2cfAa4Aa1f0",
+      "startBlock": 18926282
+    }
+  }
+}
