@@ -1,35 +1,43 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+const colors = require('tailwindcss/colors')
+
+module.exports = {
+  content: ['./src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        primary: {
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
+        primary: colors.purple,
+        secondary: colors.pink,
+        accent: colors.cyan,
+        background: {
+          DEFAULT: '#0A0A0F',
+          lighter: '#13131A',
+          darker: '#050507',
         },
-        dark: {
-          900: '#121212',
-          800: '#1a1a1a',
-          700: '#262626',
-          600: '#333333',
-          500: '#404040',
-        }
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-primary': 'linear-gradient(to right, #8b5cf6, #6d28d9)',
+      animation: {
+        'gradient': 'gradient 8s linear infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite',
+      },
+      keyframes: {
+        gradient: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        glow: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.5 },
+        },
       },
     },
   },
   plugins: [
     require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
   ],
 } 
