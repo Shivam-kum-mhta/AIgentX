@@ -4,6 +4,22 @@ import { Search, Filter } from 'lucide-react'
 import { Input } from '../shared/Input'
 import { Button } from '../shared/Button'
 import { motion } from 'framer-motion'
+import { VoiceInput } from '../shared/VoiceInput'
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+}
 
 export function AgentGrid({ agents, onBuy, onRent }) {
   const [search, setSearch] = useState('')
@@ -19,59 +35,48 @@ export function AgentGrid({ agents, onBuy, onRent }) {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search agents..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full"
-            icon={<Search className="w-4 h-4 text-gray-400" />}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={filter === 'all' ? 'primary' : 'outline'}
-            onClick={() => setFilter('all')}
-          >
-            All
-          </Button>
-          <Button
-            variant={filter === 'sale' ? 'primary' : 'outline'}
-            onClick={() => setFilter('sale')}
-          >
-            For Sale
-          </Button>
-          <Button
-            variant={filter === 'rent' ? 'primary' : 'outline'}
-            onClick={() => setFilter('rent')}
-          >
-            For Rent
-          </Button>
-        </div>
+    <div className="relative">
+      {/* Background glow spots */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
+      {/* Grid */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        layout
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
       >
-        {filteredAgents.map(agent => (
-          <AgentCard
+        {filteredAgents.map((agent, index) => (
+          <motion.div
             key={agent.tokenId}
-            agent={agent}
-            onBuy={onBuy}
-            onRent={onRent}
-          />
+            variants={item}
+            className="group"
+          >
+            <AgentCard 
+              agent={agent}
+              onBuy={onBuy}
+              onRent={onRent}
+            />
+          </motion.div>
         ))}
       </motion.div>
 
+      {/* Empty state */}
       {filteredAgents.length === 0 && (
-        <div className="text-center py-12">
-          <Filter className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-300">No agents found</h3>
-          <p className="text-gray-400">Try adjusting your search or filter</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-20"
+        >
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-500/10 mb-6">
+            <div className="w-10 h-10 rounded-full bg-purple-500/20 animate-pulse" />
+          </div>
+          <h3 className="text-xl font-medium mb-2">No Agents Found</h3>
+          <p className="text-gray-400">Be the first to create an AI agent!</p>
+        </motion.div>
       )}
     </div>
   )

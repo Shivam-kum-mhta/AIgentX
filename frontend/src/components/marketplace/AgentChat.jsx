@@ -2,7 +2,68 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useWeb3 } from '../../context/Web3Context'
 import { Button } from '../shared/Button'
+import { Input } from '../shared/Input'
 import { ArrowLeft } from 'lucide-react'
+import { VoiceInput } from '../shared/VoiceInput'
+
+// Same language configuration as MintForm
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'hi', name: 'Hindi' }
+]
+
+// Same transliteration function as MintForm
+const transliterate = async (text, language) => {
+  try {
+    const response = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=${language}-t-i0-und&num=1`)
+    const data = await response.json()
+    
+    if (data[0] === 'SUCCESS') {
+      return data[1][0][1][0]
+    }
+    return text
+  } catch (error) {
+    console.error('Transliteration error:', error)
+    return text
+  }
+}
+
+// Same translation function as MintForm
+const translateText = async (text, fromLang, toLang = 'en') => {
+  try {
+    let nativeText = text
+    if (fromLang === 'hi') {
+      nativeText = await transliterate(text, 'hi')
+    }
+
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(nativeText)}&langpair=${fromLang}|${toLang}&key=3b4ad687568b5bb8a34e`
+    )
+    const data = await response.json()
+    
+    if (data.responseStatus === 200) {
+      return {
+        english: data.responseData.translatedText,
+        native: nativeText
+      }
+    } else {
+      throw new Error(data.responseMessage || 'Translation failed')
+    }
+  } catch (error) {
+    console.error('Translation error:', error)
+    return {
+      english: text,
+      native: text
+    }
+  }
+}
 
 export function AgentChat() {
   const { tokenURI } = useParams()
@@ -10,6 +71,8 @@ export function AgentChat() {
   const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [currentMessage, setCurrentMessage] = useState('')
+  const [nativeInput, setNativeInput] = useState('')
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [connected, setConnected] = useState(false)
   const wsRef = useRef(null)
 
@@ -43,20 +106,34 @@ export function AgentChat() {
       addMessage('System', 'Connected to agent')
     }
 
-    wsRef.current.onmessage = (event) => {
+    wsRef.current.onmessage = async (event) => {
       const response = JSON.parse(event.data)
-      addMessage('Agent', response.response || JSON.stringify(response))
+      const agentMessage = response.response || JSON.stringify(response)
+      
+      // Keep original English response and translate to selected language
+      if (selectedLanguage !== 'en') {
+        try {
+          // Translate from English to selected language (e.g., Hindi)
+          const { english: translatedText } = await translateText(agentMessage, 'en', selectedLanguage)
+          addMessage('Agent', agentMessage, translatedText) // English message first, translated message second
+        } catch (error) {
+          console.error('Translation error:', error)
+          addMessage('Agent', agentMessage) // Fallback to English only if translation fails
+        }
+      } else {
+        addMessage('Agent', agentMessage) // English only for English users
+      }
     }
 
-    wsRef.current.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason)
+    wsRef.current.onclose = () => {
+      console.log('Disconnected from WebSocket')
       setConnected(false)
-      addMessage('System', `Disconnected from agent: ${event.reason || 'Connection closed'}`)
+      addMessage('System', 'Disconnected from agent')
     }
 
     wsRef.current.onerror = (error) => {
       console.error('WebSocket error:', error)
-      addMessage('System', 'Connection error occurred')
+      addMessage('System', 'Error: ' + error.message)
     }
   }
 
@@ -66,15 +143,40 @@ export function AgentChat() {
     }
   }
 
-  const addMessage = (sender, text) => {
+  const addMessage = (sender, text, nativeText = null) => {
     setMessages(prev => [...prev, {
       sender,
       text,
+      nativeText,
       timestamp: new Date().toLocaleTimeString()
     }])
   }
 
-  const sendMessage = (e) => {
+  const handleMessageChange = async (e) => {
+    const newText = e.target.value
+    setNativeInput(newText)
+    
+    if (selectedLanguage !== 'en' && newText) {
+      const { english, native } = await translateText(newText, selectedLanguage)
+      setNativeInput(native)
+      setCurrentMessage(english)
+    } else {
+      setCurrentMessage(newText)
+    }
+  }
+
+  const handleVoiceInput = async (transcript) => {
+    if (selectedLanguage !== 'en') {
+      const { english, native } = await translateText(transcript, selectedLanguage)
+      setNativeInput(native)
+      setCurrentMessage(english)
+    } else {
+      setNativeInput('')
+      setCurrentMessage(transcript)
+    }
+  }
+
+  const sendMessage = async (e) => {
     e.preventDefault()
     
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -83,12 +185,15 @@ export function AgentChat() {
     }
 
     if (currentMessage.trim()) {
+      // Send English message to backend
       wsRef.current.send(JSON.stringify({
         prompt: currentMessage
       }))
 
-      addMessage('You', currentMessage)
+      // Add both native and English messages to chat
+      addMessage('You', currentMessage, selectedLanguage !== 'en' ? nativeInput : null)
       setCurrentMessage('')
+      setNativeInput('')
     }
   }
 
@@ -105,6 +210,17 @@ export function AgentChat() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              {LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
             <div className="flex items-center space-x-2">
               <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm text-gray-400">
@@ -129,22 +245,48 @@ export function AgentChat() {
                   <span className="font-medium">{msg.sender}</span>
                   <span className="text-gray-400">{msg.timestamp}</span>
                 </div>
-                <p className="text-sm">{msg.text}</p>
+                {msg.nativeText && selectedLanguage !== 'en' && (
+                  <p className="text-sm mb-2 text-purple-300">{msg.nativeText}</p>
+                )}
+                <p className="text-sm text-gray-200">{msg.text}</p>
               </div>
             ))}
           </div>
 
-          <form onSubmit={sendMessage} className="flex space-x-2">
-            <input
-              type="text"
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <Button type="submit" disabled={!connected}>
-              Send
-            </Button>
+          <form onSubmit={sendMessage} className="space-y-2">
+            {selectedLanguage !== 'en' ? (
+              <div className="space-y-2">
+                <Input
+                  value={nativeInput}
+                  onChange={handleMessageChange}
+                  placeholder={`Type in ${LANGUAGES.find(l => l.code === selectedLanguage)?.name}...`}
+                  className="bg-gray-700"
+                />
+                <Input
+                  value={currentMessage}
+                  readOnly
+                  placeholder="English translation..."
+                  className="bg-gray-700"
+                />
+              </div>
+            ) : (
+              <Input
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="bg-gray-700"
+              />
+            )}
+            
+            <div className="flex space-x-2">
+              <VoiceInput
+                onTranscript={handleVoiceInput}
+                className="ml-2"
+              />
+              <Button type="submit" disabled={!connected}>
+                Send
+              </Button>
+            </div>
           </form>
 
           <Button

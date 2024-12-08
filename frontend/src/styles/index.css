@@ -8,58 +8,89 @@
   }
 
   body {
-    @apply bg-dark-900 text-white min-h-screen;
+    @apply bg-[#0A0B14] text-white min-h-screen;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  .gradient-text {
-    @apply bg-gradient-to-r from-purple-400 to-pink-600 text-transparent bg-clip-text;
+  .space-card {
+    @apply relative bg-[#12141F]/40 backdrop-blur-sm border border-[#2A2E42]/20 
+           rounded-2xl overflow-hidden transition-all duration-300
+           hover:border-purple-500/30 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)];
   }
 
-  .card {
-    @apply bg-dark-800 rounded-xl border border-dark-700 hover:border-primary-500/50 transition-colors;
+  .space-button {
+    @apply relative overflow-hidden rounded-xl px-6 py-3 
+           bg-[#12141F]/60 border border-[#2A2E42]/30
+           hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.2)]
+           transition-all duration-300 disabled:opacity-50;
   }
 
-  .input {
-    @apply bg-dark-800 border border-dark-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  .space-input {
+    @apply bg-[#12141F]/60 border border-[#2A2E42]/30 rounded-xl px-4 py-3
+           focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
+           placeholder:text-gray-500 transition-all duration-200;
   }
 
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  .space-gradient {
+    @apply bg-gradient-to-r from-purple-500/10 via-transparent to-purple-500/10;
   }
 
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500;
+  .space-text-gradient {
+    @apply bg-gradient-to-r from-white via-purple-200 to-white text-transparent bg-clip-text;
   }
 
-  .btn-secondary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white focus:ring-primary-500;
+  .neon-glow {
+    text-shadow: 0 0 10px theme('colors.purple.500/50'),
+                 0 0 20px theme('colors.purple.500/30');
   }
 
-  .btn-outline {
-    @apply border border-primary-500 text-primary-500 hover:bg-primary-500/10 focus:ring-primary-500;
+  .neon-border {
+    box-shadow: 0 0 15px theme('colors.purple.500/20'),
+                inset 0 0 15px theme('colors.purple.500/10');
   }
 }
 
-@layer utilities {
-  .animate-gradient {
-    background-size: 200%;
-    -webkit-animation: gradient 8s linear infinite;
-    animation: gradient 8s linear infinite;
-  }
-}
-
-/* Custom scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-dark-800;
+  @apply bg-[#12141F];
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-700 rounded-full hover:bg-dark-600 transition-colors;
-} 
+  @apply bg-purple-900/30 rounded-full hover:bg-purple-800/40 transition-colors;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes space-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-space-gradient {
+  animation: space-gradient 15s linear infinite;
+  background-size: 200% 200%;
+}
