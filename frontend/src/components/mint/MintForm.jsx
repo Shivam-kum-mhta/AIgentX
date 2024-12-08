@@ -157,6 +157,11 @@ export function MintForm({ onSuccess }) {
 
       const agentData = await agentResponse.json()
       console.log('Agent created with wallet:', agentData.walletAddress)
+      // Alert the user with the new wallet address
+      toast.success(`Agent created with wallet: ${agentData.walletAddress}`, {
+        duration: 5000,
+        position: 'bottom-center'
+      })
 
       // Generate UUID and mint NFT
       const agentUUID = uuidv4()
@@ -173,7 +178,7 @@ export function MintForm({ onSuccess }) {
 
       toast.success('Agent minted successfully!')
       onSuccess?.(tx)
-      navigate(`/agent/${tokenId}`)
+      navigate(`/my-agents`)
 
     } catch (error) {
       console.error('Error minting:', error)
