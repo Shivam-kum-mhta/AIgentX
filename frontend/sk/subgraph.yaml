@@ -1,0 +1,56 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AIgentX
+    network: base-sepolia
+    source:
+      address: "0xC13ce8B54E9E7fD55e98cD10e8e4A2cfAa4Aa1f0"
+      abi: AIgentX
+      startBlock: 18926282
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AgentListed
+        - AgentMinted
+        - AgentRated
+        - AgentRented
+        - AgentSold
+        - Approval
+        - ApprovalForAll
+        - OwnershipTransferred
+        - PriceUpdated
+        - RentalEnded
+        - Transfer
+      abis:
+        - name: AIgentX
+          file: ./abis/AIgentX.json
+      eventHandlers:
+        - event: AgentListed(indexed uint256,uint256,uint256)
+          handler: handleAgentListed
+        - event: AgentMinted(indexed address,indexed uint256,string,string)
+          handler: handleAgentMinted
+        - event: AgentRated(indexed uint256,indexed address,uint256)
+          handler: handleAgentRated
+        - event: AgentRented(indexed address,indexed uint256,uint256)
+          handler: handleAgentRented
+        - event: AgentSold(indexed address,indexed address,indexed uint256,uint256)
+          handler: handleAgentSold
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: PriceUpdated(indexed uint256,uint256,uint256)
+          handler: handlePriceUpdated
+        - event: RentalEnded(indexed uint256,indexed address)
+          handler: handleRentalEnded
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/a-igent-x.ts
