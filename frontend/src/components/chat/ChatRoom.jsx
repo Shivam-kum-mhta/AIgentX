@@ -125,14 +125,93 @@ export function ChatRoom({ agent, messages, onSendMessage }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Function to translate text
+  const translateText = async (text, fromLang, toLang) => {
+    try {
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
+      )
+      const data = await response.json()
+      return data.responseData.translatedText
+    } catch (error) {
+      console.error('Translation error:', error)
+      return text
+    }
+  }
+
+  // Handle voice input with translation
+  const handleVoiceInput = async (transcript) => {
+    // Detect language and translate if needed
+    try {
+      const hindiTranslation = await translateText(transcript, 'en', 'hi')
+      setInput(transcript)
+      // Store both versions
+      setInput({
+        english: transcript,
+        hindi: hindiTranslation
+      })
+    } catch (error) {
+      console.error('Voice translation error:', error)
+      setInput(transcript)
+    }
+  }
+
+  // Handle text submission
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!input.trim()) return
 
+    const userMessage = typeof input === 'string' ? input : input.english
     setInput('')
     setIsTyping(true)
-    await onSendMessage(input)
-    setIsTyping(false)
+
+    try {
+      // Send message and get response
+      const response = await onSendMessage(userMessage)
+      
+      // Translate response to Hindi
+      const hindiResponse = await translateText(response, 'en', 'hi')
+
+      // Update messages with bilingual response
+      const updatedMessages = [
+        ...messages,
+        {
+          role: 'assistant',
+          content: {
+            english: response,
+            hindi: hindiResponse
+          }
+        }
+      ]
+
+      // Update messages through parent component
+      if (typeof onSendMessage === 'function') {
+        onSendMessage(updatedMessages)
+      }
+    } catch (error) {
+      console.error('Chat error:', error)
+    } finally {
+      setIsTyping(false)
+    }
+  }
+
+  // Message display component
+  const MessageContent = ({ message }) => {
+    const content = message.content
+    const isAssistant = message.role === 'assistant'
+
+    return (
+      <div className="space-y-2">
+        <p className="text-gray-200">
+          {typeof content === 'string' ? content : content.english}
+        </p>
+        {isAssistant && content.hindi && (
+          <p className="text-gray-400 mt-2 pt-2 border-t border-purple-500/10">
+            {content.hindi}
+          </p>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -219,7 +298,7 @@ export function ChatRoom({ agent, messages, onSendMessage }) {
                           : 'from-pink-500/10 via-transparent to-pink-500/10'
                       } opacity-0 group-hover:opacity-100 transition-opacity`} />
                     </div>
-                    <p className="text-gray-200 relative z-10">{message.content}</p>
+                    <MessageContent message={message} />
                   </motion.div>
                 </motion.div>
               ))}
@@ -270,12 +349,12 @@ export function ChatRoom({ agent, messages, onSendMessage }) {
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2">
               <VoiceInput
-                onTranscript={(text) => setInput(text)}
+                onTranscript={handleVoiceInput}
                 className="text-gray-400 hover:text-gray-300 transition-colors"
               />
               <Button
                 type="submit"
-                disabled={!input.trim() || isTyping}
+                disabled={!input || isTyping}
                 className="p-2 space-button hover:bg-purple-500/10"
               >
                 <Send className="w-5 h-5" />
