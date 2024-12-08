@@ -41,12 +41,11 @@ This vision is enhanced by our natural language interface - simply describe what
 - **Natural Language Creation**: Create AI agents through simple conversation
 - **Autonomous Operation**: Each agent has its own wallet and decision-making capabilities
 - **Dual Monetization**: Rent or sell your agents on the marketplace
-- **Community Driven**: Rating system ensures quality and reliability
 - **Decentralized Data Management**: Utilizing The Graph for querying and Walrus for storage
-
+- **Community Driven**: Rating system ensures quality and reliability
+  
 ## Architecture 
-
-![AIgentX Architecture](path_to_architecture_diagram)
+![FlowChart](https://github.com/user-attachments/assets/5f3f8bbb-fddd-41c9-83a0-473d84d42250)
 
 Our architecture combines multiple cutting-edge technologies:
 
