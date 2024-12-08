@@ -1,0 +1,309 @@
+# Core Types
+type AIAgent @entity {
+  id: ID!
+  name: String!
+  description: String!
+  creator: User!
+  owner: User!
+  walletAddress: String!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  isActive: Boolean!
+  price: BigInt
+  rentPrice: BigInt
+  rentDuration: BigInt
+  totalRentals: BigInt!
+  totalRevenue: BigInt!
+  rating: BigDecimal!
+  numRatings: BigInt!
+  capabilities: [Capability!]! @derivedFrom(field: "agent")
+  transactions: [Transaction!]! @derivedFrom(field: "agent")
+  rentals: [Rental!]! @derivedFrom(field: "agent")
+  reviews: [Review!]! @derivedFrom(field: "agent")
+  metadata: AgentMetadata!
+  performanceMetrics: [PerformanceMetric!]! @derivedFrom(field: "agent")
+  customizations: [AgentCustomization!]! @derivedFrom(field: "agent")
+  category: AgentCategory!
+  language: [String!]!
+  version: String!
+  lastInteraction: BigInt
+  trainingData: String
+  modelType: String!
+  accessControl: AccessControl!
+}
+
+type User @entity {
+  id: ID!
+  address: String!
+  username: String
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  createdAgents: [AIAgent!]! @derivedFrom(field: "creator")
+  ownedAgents: [AIAgent!]! @derivedFrom(field: "owner")
+  rentedAgents: [Rental!]! @derivedFrom(field: "renter")
+  transactions: [Transaction!]! @derivedFrom(field: "user")
+  reviews: [Review!]! @derivedFrom(field: "reviewer")
+  reputation: BigDecimal!
+  totalRevenue: BigInt!
+  preferences: UserPreferences!
+  notifications: [Notification!]! @derivedFrom(field: "user")
+  watchlist: [AIAgent!]!
+  lastActive: BigInt!
+  referralCode: String
+  referredBy: User
+  tier: UserTier!
+}
+
+type Capability @entity {
+  id: ID!
+  agent: AIAgent!
+  name: String!
+  description: String!
+  parameters: [Parameter!]! @derivedFrom(field: "capability")
+  category: CapabilityCategory!
+  isActive: Boolean!
+  performanceScore: BigDecimal!
+  usageCount: BigInt!
+  lastUsed: BigInt
+  apiEndpoint: String
+  authRequired: Boolean!
+}
+
+type Transaction @entity {
+  id: ID!
+  txHash: String!
+  agent: AIAgent!
+  user: User!
+  type: TransactionType!
+  amount: BigInt!
+  timestamp: BigInt!
+  status: TransactionStatus!
+  metadata: String
+  gasUsed: BigInt!
+  blockNumber: BigInt!
+  errorMessage: String
+}
+
+type Rental @entity {
+  id: ID!
+  agent: AIAgent!
+  renter: User!
+  startTime: BigInt!
+  endTime: BigInt!
+  price: BigInt!
+  status: RentalStatus!
+  transactions: [Transaction!]!
+  usage: [UsageMetric!]! @derivedFrom(field: "rental")
+  rating: BigDecimal
+  review: Review
+  extensionCount: BigInt!
+  totalCost: BigInt!
+}
+
+type Review @entity {
+  id: ID!
+  agent: AIAgent!
+  reviewer: User!
+  rating: BigDecimal!
+  comment: String
+  timestamp: BigInt!
+  helpful: BigInt!
+  notHelpful: BigInt!
+  rental: Rental
+  responses: [ReviewResponse!]! @derivedFrom(field: "review")
+  isVerified: Boolean!
+}
+
+# Supporting Types
+type AgentMetadata @entity {
+  id: ID!
+  ipfsHash: String!
+  name: String!
+  description: String!
+  image: String
+  externalUrl: String
+  attributes: [Attribute!]!
+  lastUpdated: BigInt!
+  version: String!
+}
+
+type PerformanceMetric @entity {
+  id: ID!
+  agent: AIAgent!
+  metric: String!
+  value: BigDecimal!
+  timestamp: BigInt!
+  category: MetricCategory!
+  context: String
+}
+
+type AgentCustomization @entity {
+  id: ID!
+  agent: AIAgent!
+  key: String!
+  value: String!
+  timestamp: BigInt!
+  setBy: User!
+}
+
+type Parameter @entity {
+  id: ID!
+  capability: Capability!
+  name: String!
+  dataType: String!
+  required: Boolean!
+  defaultValue: String
+  validation: String
+}
+
+type UserPreferences @entity {
+  id: ID!
+  user: User!
+  notificationPreferences: NotificationPreferences!
+  displayPreferences: DisplayPreferences!
+  privacySettings: PrivacySettings!
+}
+
+type Notification @entity {
+  id: ID!
+  user: User!
+  type: NotificationType!
+  message: String!
+  timestamp: BigInt!
+  read: Boolean!
+  actionRequired: Boolean!
+  relatedEntity: String
+  priority: NotificationPriority!
+}
+
+type UsageMetric @entity {
+  id: ID!
+  rental: Rental!
+  metricType: String!
+  value: BigDecimal!
+  timestamp: BigInt!
+  details: String
+}
+
+type AccessControl @entity {
+  id: ID!
+  owner: String!
+  allowedUsers: [String!]!
+  allowedRoles: [String!]!
+  restrictions: [String!]!
+  updatedAt: BigInt!
+}
+
+# Enums
+enum TransactionType {
+  PURCHASE
+  RENTAL
+  REFUND
+  REVENUE_SHARE
+  UPGRADE
+  EXTENSION
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum RentalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXTENDED
+  OVERDUE
+}
+
+enum UserTier {
+  BASIC
+  PREMIUM
+  ENTERPRISE
+  DEVELOPER
+}
+
+enum AgentCategory {
+  FINANCE
+  TRADING
+  ANALYSIS
+  CUSTOMER_SERVICE
+  DEVELOPMENT
+  RESEARCH
+  CUSTOM
+}
+
+enum CapabilityCategory {
+  API_INTEGRATION
+  DATA_PROCESSING
+  COMMUNICATION
+  AUTOMATION
+  ANALYSIS
+  CUSTOM
+}
+
+enum MetricCategory {
+  PERFORMANCE
+  RELIABILITY
+  ACCURACY
+  EFFICIENCY
+  SATISFACTION
+}
+
+enum NotificationType {
+  RENTAL_EXPIRY
+  PRICE_CHANGE
+  PERFORMANCE_ALERT
+  REVIEW
+  TRANSACTION
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+type ReviewResponse @entity {
+  id: ID!
+  review: Review!
+  responder: User!
+  content: String!
+  timestamp: BigInt!
+  isOfficial: Boolean!
+}
+
+type Attribute @entity {
+  id: ID!
+  traitType: String!
+  value: String!
+  displayType: String
+}
+
+type NotificationPreferences @entity {
+  id: ID!
+  email: Boolean!
+  push: Boolean!
+  sms: Boolean!
+  types: [NotificationType!]!
+}
+
+type DisplayPreferences @entity {
+  id: ID!
+  theme: String!
+  language: String!
+  timezone: String!
+}
+
+type PrivacySettings @entity {
+  id: ID!
+  profileVisibility: String!
+  activityVisibility: String!
+  contactPermissions: String!
+} 
